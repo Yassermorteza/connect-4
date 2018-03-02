@@ -1,0 +1,36 @@
+{
+  "name": "connect-4-",
+  "version": "1.0.0",
+  "description": "Connect 4 game made on Pixi, Es2015",
+  "main": "bundle.js",
+  "scripts": {
+    "start": "npm run build",
+    "watch": "live-server docs && watchify src/app.js -o docs/bundle.js -v",
+    "build": "browserify src/app.js -o docs/bundle.js && js-beautify src/app.js -o src/app.js",
+    "postbuild": "live-server docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yassermorteza/connect-4-.git"
+  },
+  "keywords": [
+    "connect4",
+    "pixijs",
+    "es2015"
+  ],
+  "author": "Yasser Morteza",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Yassermorteza/connect-4-/issues"
+  },
+  "homepage": "https://github.com/Yassermorteza/connect-4-#readme",
+  "dependencies": {
+    "howler": "^2.0.9",
+    "pixi.js": "^4.7.0"
+  },
+  "devDependencies": {
+    "browserify": "latest",
+    "js-beautify": "latest",
+    "watchify": "^3.10.0"
+  }
+}
