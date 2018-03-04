@@ -5,9 +5,7 @@
   "main": "bundle.js",
   "scripts": {
     "start": "npm run build",
-    "watch": "live-server docs && watchify src/app.js -o docs/bundle.js -v",
-    "build": "browserify src/app.js -o docs/bundle.js && js-beautify src/app.js -o src/app.js",
-    "postbuild": "live-server docs"
+    "build": "concurrently \"watchify -v -t babelify src/app.js -o docs/bundle.js\" \"uglifyjs docs/bundle.js -c -o docs/bundle.js\" \"glob-run js-beautify -r 'src/*.js'\" \"live-server docs\""
   },
   "repository": {
     "type": "git",
@@ -29,8 +27,13 @@
     "pixi.js": "^4.7.0"
   },
   "devDependencies": {
-    "browserify": "latest",
+    "babel-core": "^6.26.0",
+    "babel-polyfill": "^6.26.0",
+    "babelify": "^8.0.0",
+    "concurrently": "^3.5.1",
+    "glob-run": "^0.1.6",
     "js-beautify": "latest",
+    "uglify-es": "^3.3.9",
     "watchify": "^3.10.0"
   }
 }
