@@ -1,6 +1,9 @@
+'use strict';
+
+require("babel-polyfill");
 const PIXI = require('pixi.js');
 const board = require('./board/board');
-const events = require('./events/events');
+const event = require('./events/events');
 const store = require('./store');
 const win = require('./win');
 
@@ -33,9 +36,6 @@ function resize() {
 resize();
 window.onresize = resize;
 
-let event = events(win);
-store.event = event;
-console.log(store);
 let container = board.container();
 
 let layer = new PIXI.Graphics();
@@ -46,6 +46,10 @@ layer.drawRect(0, 0, 490, 420);
 layer.interactive = true;
 layer.on('mousemove', moveRightLeft);
 container.addChild(layer);
+
+store.layer = layer;
+store.event = event;
+store.win = win;
 
 function moveRightLeft() {
     x = Math.round(renderer.plugins.interaction.mouse.global.x) - 380;
