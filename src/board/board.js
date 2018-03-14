@@ -3,7 +3,7 @@
 const PIXI = require('pixi.js');
 const Howel = require('howler');
 const store = require('../store');
-const win = require('../win');
+const Winner = require('../win');
 const ai = require('../ai');
 
 const texture = PIXI.Texture.fromImage('images/board.png');
@@ -183,10 +183,9 @@ module.exports = {
                     store.player.position.set(x, 350 - (store.row * 70));
                     clickSound.play();
                     // require('../ai').checkStore();
-
+                    let winner = new Winner(self.matrix, store.player.color);
                     let empty = self.emptyCells().length;
-                    
-                    if(win.winner(self.matrix, store.player.color) || empty < 1){
+                    if(winner.checkWinner() || empty < 1){
                         return self.showMessage();
                     }
 
