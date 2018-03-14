@@ -51141,113 +51141,23 @@ module.exports = {
         this.result();
     },
 
-    emptyCells: function () {
-        let empty = new Array();
-        for (let i = 0; i < matrix.length; i++) {
-            empty[i] = [];
-            for (let j = 0; j < matrix[i].length; j++) {
-
-                if (typeof matrix[i][j] === 'number') {
-                    empty[i].push(j);
-                };
-            };
-        };
-
-        return empty.filter(el => el.length > 0);
-    },
-
-    sequence: function (array) {
-        for (let i = 0; i < array.length; ++i) {
-            if (array[i]) {
-                for (let j = 0; j < array[i].length; ++j) {
-                    if (array[i][j] + 1 === array[i][j + 1]) {
-                        this.counter++;
-                        if (this.counter >= 3) {
-                            this.counter = 0;
-                            return true;
-                        }
-                    } else {
-                        this.counter = 0;
-                    };
-                }
-            }
-        };
-
-        return false;
-    },
-
-    diagonal: function (array) {
-
-        for (let i = 0; i < array.length; ++i) {
-
-            for (let j = 0; j < array[i].length; ++j) {
-                let r = 1;
-                let c = 0;
-                let r1 = 1;
-                let c1 = 0;
-                //Southeast Northwest
-                while (j + r < 7 && i + r < 6 && array[i + c][j + c] + 1 === array[i + r][j + r]) {
-                    r++;
-                    c++;
-                    if (c >= 3) {
-                        return true;
-                    };
-                };
-                //Southwest NorthEast
-                while (j - r1 >= 0 && i + r1 < 6 && array[i + c1][j - c1] - 1 === array[i + r1][j - r1]) {
-                    r1++;
-                    c1++;
-                    if (c1 >= 3) {
-                        return true;
-                    };
-                };
-            };
-        };
-
-        return false;
-    },
-
-    winner: function (matrix, player) {
-        let horizontal = [];
-        let vertical = [];
-
-        for (let i = 0; i < matrix.length; i++) {
-            horizontal[i] = [];
-            for (let j = 0; j < matrix[i].length; j++) {
-                if (matrix[i][j] === player) {
-                    horizontal[i][j] = j;
-                    if (!vertical[j]) {
-                        vertical[j] = [];
-                        vertical[j].push(i);
-                    } else {
-                        vertical[j].push(i);
-                    };
-                };
-            };
-        };
-
-        return this.sequence(horizontal) || this.sequence(vertical) || this.diagonal(horizontal);
-    },
-
     result: function () {
         let emptyCells = this.emptyCells();
-        let user = this.winner(matrix, 'red');
-        let bot = this.winner(matrix, 'green');
+        // let user = this.winner(matrix, 'red');
+        // let bot = this.winner(matrix, 'green');
 
-        log('user: ', user);
-        log('bot: ', bot);
+        // log('user: ', user);
+        // log('bot: ', bot);
     }
 };
 
-},{"./store":520}],517:[function(require,module,exports){
+},{"./store":519}],517:[function(require,module,exports){
 'use strict';
 
 require("babel-polyfill");
 const PIXI = require('pixi.js');
 const board = require('./board/board');
-const event = require('./events/events');
 const store = require('./store');
-const win = require('./win');
 
 let w,
     h,
@@ -51292,8 +51202,6 @@ layer.on('mousemove', moveRightLeft);
 container.addChild(layer);
 
 store.layer = layer;
-store.event = event;
-store.win = win;
 
 function moveRightLeft() {
     x = Math.round(renderer.plugins.interaction.mouse.global.x) - 380;
@@ -51309,12 +51217,13 @@ animate();
 board.board();
 board.playerTurn();
 
-},{"./board/board":518,"./events/events":519,"./store":520,"./win":521,"babel-polyfill":1,"pixi.js":468}],518:[function(require,module,exports){
+},{"./board/board":518,"./store":519,"babel-polyfill":1,"pixi.js":468}],518:[function(require,module,exports){
 'use strict';
 
 const PIXI = require('pixi.js');
 const Howel = require('howler');
 const store = require('../store');
+const win = require('../win');
 const ai = require('../ai');
 
 const texture = PIXI.Texture.fromImage('images/board.png');
@@ -51322,34 +51231,28 @@ const redBall = PIXI.Texture.fromImage('images/red.png');
 const greenBall = PIXI.Texture.fromImage('images/green.png');
 
 const victorySound = new Howl({ src: ['sounds/victory.mp3'] });
+const loosSound = new Howl({ src: ['sounds/loos.mp3'] });
+const clickSound = new Howl({ src: ['sounds/click.mp3'] });
 
-let container = new PIXI.Container();
+const container = new PIXI.Container();
 container.hitArea = new PIXI.Rectangle(0, 0, 480, 450);
 container.position.set(350, 150);
-
-let data = {
-    rows: [],
-    cols: [],
-    diagonalA: [],
-    diagonalB: [],
-    diagonalC: [],
-    matrix: []
-};
 
 module.exports = {
 
     boardcell: [],
+    matrix: [],
+    message: {},
     ball: {},
     color: '',
     state: '',
+    turn: true,
 
     board: function () {
         for (let i = 0; i <= 5; i++) {
-            store.matrix[i] = [];
+            this.matrix[i] = [];
             for (let j = 0; j <= 6; j++) {
-                store.matrix[i].push(0);
-                store.bot.matrix[i] = [];
-                store.user.matrix[i] = [];
+                this.matrix[i].push(0);
                 store.cellIndex.push(i + '' + j);
                 let x = j * 70;
                 let y = i * 70;
@@ -51362,23 +51265,22 @@ module.exports = {
                 this.boardcell.rowIndex = i;
                 this.boardcell.position.set(x, y);
                 this.boardcell.interactive = true;
-                this.boardcell.on('click', store.event.dropBall());
+                this.boardcell.on('click', this.dropBall());
                 container.addChild(this.boardcell);
             }
-        }
+        };
     },
 
     playerTurn: function () {
-        if (store.turn) {
+        if (this.turn) {
             this.ball = redBall;
             this.color = 'red';
-            store.turn = false;
+            this.turn = false;
         } else {
             this.ball = greenBall;
             this.color = 'green';
-            store.turn = true;
+            this.turn = true;
         }
-        store.color = this.color;
         store.player = new PIXI.Sprite(this.ball);
         store.player.position.set(0, -70);
         store.player.width = 70;
@@ -51389,7 +51291,7 @@ module.exports = {
 
     showMessage: function () {
 
-        let empty = ai.emptyCells().length;
+        let empty = this.emptyCells().length;
         if (empty < 1) {
             this.state = 'No Winner';
         } else {
@@ -51413,15 +51315,19 @@ module.exports = {
             wordWrapWidth: 440
         });
 
-        store.message = new PIXI.Text(`${this.state}!!! Play again.`, style);
-        store.message.position.set(60, 150);
-        container.addChild(store.message);
-        store.message.interactive = true;
-        store.message.cursor = "pointer";
-        store.message.on('click', this.reset());
+        this.message = new PIXI.Text(`${this.state}!!! Play again.`, style);
+        this.message.position.set(60, 150);
+        container.addChild(this.message);
+        this.message.interactive = true;
+        this.message.cursor = "pointer";
+        this.message.on('click', this.reset());
         store.layer.interactive = false;
         store.onclick = false;
-        victorySound.play();
+        if (this.color === 'red') {
+            victorySound.play();
+        } else {
+            loosSound.play();
+        }
     },
 
     reset: function () {
@@ -51431,13 +51337,10 @@ module.exports = {
         return function () {
 
             store.onclick = true;
-            store.turn = true;
-            store.user = JSON.parse(JSON.stringify(data));
-            store.bot = JSON.parse(JSON.stringify(data));
             store.cellIndex = [];
             store.countCol = 5;
             store.row = 0;
-            container.removeChild(store.message);
+            container.removeChild(self.message);
             for (let i = 0; i < container.children.length; i++) {
                 if (container.children[i].color) {
                     container.removeChild(container.children[i]);
@@ -51454,22 +51357,6 @@ module.exports = {
         };
     },
 
-    container: () => container
-};
-
-},{"../ai":516,"../store":520,"howler":330,"pixi.js":468}],519:[function(require,module,exports){
-'use strict';
-
-const store = require('../store');
-const Howel = require('howler');
-const board = require('../board/board');
-
-let clickSound = new Howl({
-    src: ['sounds/click.mp3']
-});
-
-module.exports = {
-
     findIndex: function (colIndex, count) {
         let item = count + '' + colIndex;
         if (store.countCol < 0) {
@@ -51478,7 +51365,7 @@ module.exports = {
             return;
         } else {
             return store.cellIndex.indexOf(item);
-        }
+        };
     },
 
     dropBall: function () {
@@ -51509,163 +51396,142 @@ module.exports = {
                 }
 
                 if (~i && store.cellIndex[i]) {
-                    store.matrix[store.countCol][colIndex] = store.player.color;
+                    self.matrix[store.countCol][colIndex] = store.player.color;
                     store.cellIndex[i] = store.player.color;
                     store.colIndex = colIndex;
                     store.player.position.set(x, 350 - store.row * 70);
                     clickSound.play();
-                    require('../ai').checkStore();
-                    let empty = require('../ai').emptyCells().length;
-                    if (empty < 1) {
-                        return board.showMessage();
-                    };
+                    // require('../ai').checkStore();
 
-                    if (store.player.color === 'red') {
-                        if (self.checkWinner(colIndex, store.countCol, store.user)) return board.showMessage();
-                    } else {
-                        if (self.checkWinner(colIndex, store.countCol, store.bot)) return board.showMessage();
+                    let empty = self.emptyCells().length;
+
+                    if (win.winner(self.matrix, store.player.color) || empty < 1) {
+                        return self.showMessage();
                     }
 
-                    board.playerTurn();
+                    self.playerTurn();
                     store.row = 0;
                     store.countCol = 5;
                     store.index = false;
-                }
+                };
             };
         };
     },
 
-    checkWinner: function (col, row, player) {
-        return store.win.verticalHorzintal(col, row, player) || store.win.diagonal(col, row, player);
-    }
+    emptyCells: function () {
+        let empty = new Array();
+        for (let i = 0; i < this.matrix.length; i++) {
+            empty[i] = [];
+            for (let j = 0; j < this.matrix[i].length; j++) {
+
+                if (typeof this.matrix[i][j] === 'number') {
+                    empty[i].push(j);
+                };
+            };
+        };
+
+        return empty.filter(el => el.length > 0);
+    },
+
+    container: () => container
 };
 
-},{"../ai":516,"../board/board":518,"../store":520,"howler":330}],520:[function(require,module,exports){
+},{"../ai":516,"../store":519,"../win":520,"howler":330,"pixi.js":468}],519:[function(require,module,exports){
 'use strict';
 
-let data = {
-    rows: [],
-    cols: [],
-    diagonalA: [],
-    diagonalB: [],
-    diagonalC: [],
-    matrix: []
-};
-
-let user = JSON.parse(JSON.stringify(data));
-let bot = JSON.parse(JSON.stringify(data));
-
 module.exports = {
-    user: user,
-    bot: bot,
-    event: {},
     countCol: 5,
     row: 0,
     cellIndex: [],
     palyer: {},
-    turn: true,
     onclick: true,
     message: {},
-    color: '',
     botCol: '',
     layer: {},
     matrix: new Array(),
-    colIndex: '',
-    win: {}
+    colIndex: ''
 };
 
-},{}],521:[function(require,module,exports){
+},{}],520:[function(require,module,exports){
 'use strict';
-
-const store = require('./store');
-const board = require('./board/board');
 
 module.exports = {
 
     counter: 0,
 
-    sequence: function (value) {
-        let array = value.sort();
-        for (let i = 0; i < array.length; i++) {
-            if (array[i] + 1 === array[i + 1]) {
-                this.counter++;
-                if (this.counter >= 3) {
-                    this.counter = 0;
-                    return true;
+    sequence: function (array) {
+        for (let i = 0; i < array.length; ++i) {
+            if (array[i]) {
+                for (let j = 0; j < array[i].length; ++j) {
+                    if (array[i][j] + 1 === array[i][j + 1]) {
+                        this.counter++;
+                        if (this.counter >= 3) {
+                            this.counter = 0;
+                            return true;
+                        }
+                    } else {
+                        this.counter = 0;
+                    };
                 }
-            } else {
-                this.counter = 0;
             }
-        }
+        };
 
         return false;
     },
 
-    verticalHorzintal: function (cel, row, player) {
+    diagonal: function (array) {
 
-        if (!player.rows[cel]) {
-            player.rows[cel] = [];
-            player.rows[cel].push(row);
-        } else {
-            player.rows[cel].push(row);
-            if (player.rows[cel].length >= 4) {
-                return this.sequence(player.rows[cel]);
-            };
-        };
+        for (let i = 0; i < array.length; ++i) {
 
-        if (!player.cols[row]) {
-            player.cols[row] = [];
-            player.cols[row].push(cel);
-        } else {
-            player.cols[row].push(cel);
-            if (player.cols[row].length >= 4) {
-                return this.sequence(player.cols[row]);
-            };
-        };
-    },
-
-    diagonal: function (cel, row, player) {
-
-        let sum = cel + row;
-        let num = Number(row + '' + cel);
-        let length = player.diagonalA.length;
-
-        if (length === 0) {
-            player.diagonalA[0] = [];
-            player.diagonalA[0].push(num);
-        } else {
-            for (let i = 0; i < length; i++) {
-                if (player.diagonalA[i]) {
-                    for (let j = 0; j < player.diagonalA[i].length; j++) {
-                        if (player.diagonalA[i][j] - 11 === num || player.diagonalA[i][j] + 11 === num) {
-                            player.diagonalA[i].push(num);
-                            if (player.diagonalA[i].length === 4) {
-                                return true;
-                            }
-                        } else {
-                            player.diagonalA[length + 1] = [];
-                            player.diagonalA[length + 1].push(num);
-                        };
+            for (let j = 0; j < array[i].length; ++j) {
+                let r = 1;
+                let c = 0;
+                let r1 = 1;
+                let c1 = 0;
+                //Southeast Northwest
+                while (j + r < 7 && i + r < 6 && array[i + c][j + c] + 1 === array[i + r][j + r]) {
+                    r++;
+                    c++;
+                    if (c >= 3) {
+                        return true;
+                    };
+                };
+                // Southwest NorthEast
+                while (j - r1 >= 0 && i + r1 < 6 && array[i + c1][j - c1] - 1 === array[i + r1][j - r1]) {
+                    r1++;
+                    c1++;
+                    if (c1 >= 3) {
+                        return true;
                     };
                 };
             };
         };
 
-        if (sum >= 3 && sum <= 8) {
-            if (!player.diagonalB[sum]) {
-                player.diagonalB[sum] = [];
-                player.diagonalB[sum].push(sum);
-                player.diagonalC[sum] = [];
-                player.diagonalC[sum].push(row);
-            } else {
-                player.diagonalB[sum].push(sum);
-                player.diagonalC[sum].push(row);
-                if (player.diagonalB[sum].length >= 4 && this.sequence(player.diagonalC[sum])) {
-                    return true;
+        return false;
+    },
+
+    winner: function (matrix, player) {
+        let horizontal = [];
+        let vertical = [];
+
+        for (let i = 0; i < matrix.length; i++) {
+            horizontal[i] = [];
+            for (let j = 0; j < matrix[i].length; j++) {
+                if (matrix[i][j] === player) {
+                    horizontal[i][j] = j;
+                    if (!vertical[j]) {
+                        vertical[j] = [];
+                        vertical[j].push(i);
+                    } else {
+                        vertical[j].push(i);
+                    };
                 };
             };
         };
+
+        return this.sequence(horizontal) || this.sequence(vertical) || this.diagonal(horizontal);
     }
+
 };
 
-},{"./board/board":518,"./store":520}]},{},[517]);
+},{}]},{},[517]);

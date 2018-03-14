@@ -3,9 +3,7 @@
 require("babel-polyfill");
 const PIXI = require('pixi.js');
 const board = require('./board/board');
-const event = require('./events/events');
 const store = require('./store');
-const win = require('./win');
 
 let w, h, x = 0;
 
@@ -48,8 +46,6 @@ layer.on('mousemove', moveRightLeft);
 container.addChild(layer);
 
 store.layer = layer;
-store.event = event;
-store.win = win;
 
 function moveRightLeft() {
     x = Math.round(renderer.plugins.interaction.mouse.global.x) - 380;
